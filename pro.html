@@ -734,4 +734,505 @@
     const KEIGO_PATTERNS = [
       { regex: /お伺いする|お伺いします/g, label: "「お伺いする」は謙譲語。相手や状況に応じた表現か確認してください。" },
       { regex: /ご苦労様/g, label: "「ご苦労様」は目上の相手へは不自然な場合があります。「お疲れ様です」等の検討を。" },
-      { regex: /させていただく|させて頂く|させて頂/g, label: "「させていただく」の連続・多用は冗長になりやすいため、
+      { regex: /させていただく|させて頂く|させて頂/g, label: "「させていただく」の連続・多用は冗長になりやすいため、簡潔な表現への調整も検討してください。" },
+      { regex: /見れる|食べれる|来れる|出れる|起きれる|寝れる|着れる|考えれる|調べれる/g, label: "「ら抜き言葉」の可能性があります（例：「見られる」「食べられる」「来られる」）。" },
+      { regex: /了解しました|了解です/g, label: "ビジネスメールでは「承知いたしました」「かしこまりました」への言い換えが丁寧です。" },
+      { regex: /おっしゃられる|ご説明される|ご覧になられる/g, label: "二重敬語の可能性があります。「おっしゃる」「ご説明する」「ご覧になる」等に整理してください。" },
+      { regex: /参考になりましたでしょうか/g, label: "「参考になりましたでしょうか」はやや不自然な敬語表現です。「参考になれば幸いです」等の検討を。" },
+      { regex: /とんでもございません/g, label: "「とんでもございません」は慣用表現ですが、より丁寧には「とんでもないことでございます」が自然です。" }
+    ];
+
+    const STORAGE_KEY = "pro_text_checker_dict_v1";
+
+    const DEFAULT_DICT = {
+      customReplaces: [
+        { from: "弊社", to: "当社" }
+      ],
+      ngWords: [
+        { word: "絶対", reason: "断定表現・誇大表現になりやすいため要確認" }
+      ],
+      snippets: [
+        { title: "結びの挨拶", body: "\n\n引き続きよろしくお願いいたします。" },
+        { title: "確認依頼", body: "\n\nお手すきの際にご確認いただけますと幸いです。" }
+      ]
+    };
+
+    let dict = loadDictionary();
+
+    function loadDictionary() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(DEFAULT_DICT);
+        const parsed = JSON.parse(raw);
+        return {
+          customReplaces: Array.isArray(parsed.customReplaces) ? parsed.customReplaces : [],
+          ngWords: Array.isArray(parsed.ngWords) ? parsed.ngWords : [],
+          snippets: Array.isArray(parsed.snippets) ? parsed.snippets : []
+        };
+      } catch (e) {
+        return structuredClone(DEFAULT_DICT);
+      }
+    }
+
+    function saveDictionary() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dict));
+      renderDictionaryUI();
+      showToast("辞書を保存しました");
+    }
+
+    function renderDictionaryUI() {
+      // 概要表示
+      document.getElementById("dictSummary").textContent =
+        `辞書：表記ゆれ ${BUILTIN_NOTATION_RULES.length}件 / カスタム置換 ${dict.customReplaces.length}件 / NG ${dict.ngWords.length}件 / 定型文 ${dict.snippets.length}件`;
+
+      // カスタム置換リスト
+      const repUl = document.getElementById("customReplaceList");
+      repUl.innerHTML = dict.customReplaces.length === 0
+        ? '<li class="muted-note">登録なし</li>'
+        : dict.customReplaces.map((item, idx) => `
+            <li class="custom-row">
+              <span><strong>${escapeHtml(item.from)}</strong> → <strong>${escapeHtml(item.to)}</strong></span>
+              <button class="danger" onclick="removeCustomReplace(${idx})">削除</button>
+            </li>
+          `).join("");
+
+      // NGワードリスト
+      const ngUl = document.getElementById("ngWordList");
+      ngUl.innerHTML = dict.ngWords.length === 0
+        ? '<li class="muted-note">登録なし</li>'
+        : dict.ngWords.map((item, idx) => `
+            <li class="custom-row">
+              <div>
+                <strong>${escapeHtml(item.word)}</strong>
+                ${item.reason ? `<div class="muted-note" style="margin:0;">${escapeHtml(item.reason)}</div>` : ""}
+              </div>
+              <button class="danger" onclick="removeNgWord(${idx})">削除</button>
+            </li>
+          `).join("");
+
+      // 定型文リスト＆挿入ボタン
+      const snipUl = document.getElementById("snippetList");
+      const snipBtns = document.getElementById("snippetButtons");
+      if (dict.snippets.length === 0) {
+        snipUl.innerHTML = '<li class="muted-note">登録なし</li>';
+        snipBtns.innerHTML = '<span class="muted-note">定型文タブから登録するとここにボタンが表示されます。</span>';
+      } else {
+        snipUl.innerHTML = dict.snippets.map((item, idx) => `
+          <li class="custom-row">
+            <div>
+              <strong>${escapeHtml(item.title)}</strong>
+              <div class="muted-note" style="margin:0; white-space:pre-line;">${escapeHtml(item.body.trim())}</div>
+            </div>
+            <button class="danger" onclick="removeSnippet(${idx})">削除</button>
+          </li>
+        `).join("");
+
+        snipBtns.innerHTML = dict.snippets.map((item, idx) => `
+          <button type="button" onclick="insertSnippet(${idx})">+ ${escapeHtml(item.title)}</button>
+        `).join("");
+      }
+    }
+
+    function addCustomReplace() {
+      const from = document.getElementById("repFrom").value.trim();
+      const to = document.getElementById("repTo").value.trim();
+      if (!from || !to) return;
+      dict.customReplaces.push({ from, to });
+      document.getElementById("repFrom").value = "";
+      document.getElementById("repTo").value = "";
+      saveDictionary();
+    }
+
+    function removeCustomReplace(idx) {
+      dict.customReplaces.splice(idx, 1);
+      saveDictionary();
+    }
+
+    function addNgWord() {
+      const word = document.getElementById("ngWordInput").value.trim();
+      const reason = document.getElementById("ngReasonInput").value.trim();
+      if (!word) return;
+      dict.ngWords.push({ word, reason });
+      document.getElementById("ngWordInput").value = "";
+      document.getElementById("ngReasonInput").value = "";
+      saveDictionary();
+    }
+
+    function removeNgWord(idx) {
+      dict.ngWords.splice(idx, 1);
+      saveDictionary();
+    }
+
+    function addSnippet() {
+      const title = document.getElementById("snipTitleInput").value.trim();
+      const body = document.getElementById("snipBodyInput").value;
+      if (!title || !body.trim()) return;
+      dict.snippets.push({ title, body });
+      document.getElementById("snipTitleInput").value = "";
+      document.getElementById("snipBodyInput").value = "";
+      saveDictionary();
+    }
+
+    function removeSnippet(idx) {
+      dict.snippets.splice(idx, 1);
+      saveDictionary();
+    }
+
+    function insertSnippet(idx) {
+      const snip = dict.snippets[idx];
+      if (!snip) return;
+      const inputEl = document.getElementById("inputText");
+      inputEl.value += snip.body;
+      updateCharCount();
+      runAllChecks();
+      showToast(`「${snip.title}」を挿入しました`);
+    }
+
+    function analyzeText(text) {
+      const notationHits = [];
+      const keigoHits = [];
+      const ngHits = [];
+      const customHits = [];
+
+      // 表記ゆれ検出（自動置換対象と注意対象を分けて集計）
+      BUILTIN_NOTATION_RULES.forEach(rule => {
+        if (!rule.from || rule.from === rule.to) return;
+        const count = countMatches(text, rule.from);
+        if (count > 0) {
+          notationHits.push({
+            from: rule.from,
+            to: rule.to,
+            count,
+            auto: rule.auto,
+            cat: rule.cat
+          });
+        }
+      });
+
+      // 敬語・表現注意
+      KEIGO_PATTERNS.forEach(p => {
+        const matches = text.match(p.regex);
+        if (matches && matches.length > 0) {
+          keigoHits.push({
+            count: matches.length,
+            label: p.label
+          });
+        }
+      });
+
+      // NGワード
+      dict.ngWords.forEach(ng => {
+        const count = countMatches(text, ng.word);
+        if (count > 0) {
+          ngHits.push({
+            word: ng.word,
+            reason: ng.reason,
+            count
+          });
+        }
+      });
+
+      // カスタム置換
+      dict.customReplaces.forEach(rep => {
+        const count = countMatches(text, rep.from);
+        if (count > 0) {
+          customHits.push({
+            from: rep.from,
+            to: rep.to,
+            count
+          });
+        }
+      });
+
+      return { notationHits, keigoHits, ngHits, customHits };
+    }
+
+    function runAllChecks() {
+      const text = document.getElementById("inputText").value;
+      updateCharCount();
+
+      const listEl = document.getElementById("detectionList");
+      if (!text.trim()) {
+        listEl.innerHTML = '<li class="empty-ok">文章が空です。チェックしたい文章を入力してください。</li>';
+        updateCounters(0, 0, 0, 0);
+        document.getElementById("reportOutput").value = "";
+        return;
+      }
+
+      const { notationHits, keigoHits, ngHits, customHits } = analyzeText(text);
+
+      const totalNotation = notationHits.reduce((a, b) => a + b.count, 0);
+      const totalKeigo = keigoHits.reduce((a, b) => a + b.count, 0);
+      const totalNg = ngHits.reduce((a, b) => a + b.count, 0);
+      const totalCustom = customHits.reduce((a, b) => a + b.count, 0);
+
+      updateCounters(totalNotation, totalKeigo, totalNg, totalCustom);
+
+      const items = [];
+
+      ngHits.forEach(h => {
+        items.push(`<li class="hit-item ng"><strong>[NGワード ${h.count}件]</strong> 「${escapeHtml(h.word)}」${h.reason ? ` — ${escapeHtml(h.reason)}` : ""}</li>`);
+      });
+
+      keigoHits.forEach(h => {
+        items.push(`<li class="hit-item keigo"><strong>[敬語・表現 ${h.count}件]</strong> ${escapeHtml(h.label)}</li>`);
+      });
+
+      notationHits.forEach(h => {
+        const modeTag = h.auto ? "自動置換対象" : "文脈確認";
+        items.push(`<li class="hit-item"><strong>[表記ゆれ ${h.count}件・${modeTag}]</strong> 「${escapeHtml(h.from)}」→「${escapeHtml(h.to)}」（${escapeHtml(h.cat)}）</li>`);
+      });
+
+      customHits.forEach(h => {
+        items.push(`<li class="hit-item"><strong>[カスタム置換 ${h.count}件]</strong> 「${escapeHtml(h.from)}」→「${escapeHtml(h.to)}」</li>`);
+      });
+
+      if (items.length === 0) {
+        listEl.innerHTML = '<li class="empty-ok">検出された表記ゆれ・敬語注意・NGワードはありません。</li>';
+      } else {
+        listEl.innerHTML = items.join("");
+      }
+
+      buildReport(text, notationHits, keigoHits, ngHits, customHits, false);
+    }
+
+    function applyAllFixes() {
+      let text = document.getElementById("inputText").value;
+      if (!text.trim()) return;
+
+      const beforeAnalysis = analyzeText(text);
+      const appliedLog = [];
+
+      // 自動置換対象の表記ゆれを適用
+      BUILTIN_NOTATION_RULES.forEach(rule => {
+        if (rule.auto && rule.from && rule.from !== rule.to) {
+          const cnt = countMatches(text, rule.from);
+          if (cnt > 0) {
+            text = text.split(rule.from).join(rule.to);
+            appliedLog.push(`表記ゆれ統一：${rule.from} → ${rule.to}（${cnt}件）`);
+          }
+        }
+      });
+
+      // カスタム置換を適用
+      if (document.getElementById("optCustomReplace").checked) {
+        dict.customReplaces.forEach(rep => {
+          const cnt = countMatches(text, rep.from);
+          if (cnt > 0) {
+            text = text.split(rep.from).join(rep.to);
+            appliedLog.push(`カスタム置換：${rep.from} → ${rep.to}（${cnt}件）`);
+          }
+        });
+      }
+
+      // 全角英数→半角
+      if (document.getElementById("optAlnumHalf").checked) {
+        const converted = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+          String.fromCharCode(s.charCodeAt(0) - 0xfee0)
+        );
+        if (converted !== text) {
+          appliedLog.push("全角英数→半角変換を適用");
+          text = converted;
+        }
+      }
+
+      // 全角カタカナ→半角（任意オプション）
+      if (document.getElementById("optKatakanaHalf").checked) {
+        text = toHalfWidthKatakana(text);
+        appliedLog.push("全角カタカナ→半角変換を適用");
+      }
+
+      document.getElementById("inputText").value = text;
+      document.getElementById("outputText").value = text;
+      updateCharCount();
+      runAllChecks();
+      buildReport(text, beforeAnalysis.notationHits, beforeAnalysis.keigoHits, beforeAnalysis.ngHits, beforeAnalysis.customHits, true, appliedLog);
+      showToast("一括修正を完了しました");
+    }
+
+    function buildReport(text, notationHits, keigoHits, ngHits, customHits, appliedMode, appliedLog = []) {
+      const nowStr = new Date().toLocaleString("ja-JP");
+      const lines = [
+        "=== 表記ゆれ・敬語・定型文チェックレポート ===",
+        `実行日時: ${nowStr}`,
+        `対象文字数: ${text.length} 文字`,
+        `モード: ${appliedMode ? "一括修正実行済み" : "チェックのみ"}`,
+        ""
+      ];
+
+      if (appliedMode && appliedLog.length > 0) {
+        lines.push("【適用した修正内容】");
+        appliedLog.forEach(l => lines.push(`- ${l}`));
+        lines.push("");
+      }
+
+      if (ngHits.length > 0) {
+        lines.push("【NGワード検出】");
+        ngHits.forEach(h => lines.push(`- 「${h.word}」：${h.count}件 ${h.reason ? `(${h.reason})` : ""}`));
+        lines.push("");
+      }
+
+      if (keigoHits.length > 0) {
+        lines.push("【敬語・表現注意】");
+        keigoHits.forEach(h => lines.push(`- ${h.label}（${h.count}件）`));
+        lines.push("");
+      }
+
+      if (notationHits.length > 0) {
+        lines.push("【表記ゆれ検出】");
+        notationHits.forEach(h => lines.push(`- 「${h.from}」→「${h.to}」：${h.count}件 [${h.auto ? "自動対象" : "要確認"}]`));
+        lines.push("");
+      }
+
+      if (customHits.length > 0) {
+        lines.push("【カスタム置換ヒット】");
+        customHits.forEach(h => lines.push(`- 「${h.from}」→「${h.to}」：${h.count}件`));
+        lines.push("");
+      }
+
+      if (ngHits.length === 0 && keigoHits.length === 0 && notationHits.length === 0 && customHits.length === 0) {
+        lines.push("検出された指摘事項はありません。");
+      }
+
+      document.getElementById("reportOutput").value = lines.join("\n");
+    }
+
+    function countMatches(str, sub) {
+      if (!sub) return 0;
+      return str.split(sub).length - 1;
+    }
+
+    function toHalfWidthKatakana(str) {
+      const map = {
+        "ガ":"ｶﾞ","ギ":"ｷﾞ","グ":"ｸﾞ","ゲ":"ｹﾞ","ゴ":"ｺﾞ",
+        "ザ":"ｻﾞ","ジ":"ｼﾞ","ズ":"ｽﾞ","ゼ":"ｾﾞ","ゾ":"ｿﾞ",
+        "ダ":"ﾀﾞ","ヂ":"ﾁﾞ","ヅ":"ﾂﾞ","デ":"ﾃﾞ","ド":"ﾄﾞ",
+        "バ":"ﾊﾞ","ビ":"ﾋﾞ","ブ":"ﾌﾞ","ベ":"ﾍﾞ","ボ":"ﾎﾞ",
+        "パ":"ﾊﾟ","ピ":"ﾋﾟ","プ":"ﾌﾟ","ペ":"ﾍﾟ","ポ":"ﾎﾟ",
+        "ヴ":"ｳﾞ",
+        "ア":"ｱ","イ":"ｲ","ウ":"ｳ","エ":"ｴ","オ":"ｵ",
+        "カ":"ｶ","キ":"ｷ","ク":"ｸ","ケ":"ｹ","コ":"ｺ",
+        "サ":"ｻ","シ":"ｼ","ス":"ｽ","セ":"ｾ","ソ":"ｿ",
+        "タ":"ﾀ","チ":"ﾁ","ツ":"ﾂ","テ":"ﾃ","ト":"ﾄ",
+        "ナ":"ﾅ","ニ":"ﾆ","ヌ":"ﾇ","ネ":"ﾈ","ノ":"ﾉ",
+        "ハ":"ﾊ","ヒ":"ﾋ","フ":"ﾌ","ヘ":"ﾍ","ホ":"ﾎ",
+        "マ":"ﾏ","ミ":"ﾐ","ム":"ﾑ","メ":"ﾒ","モ":"ﾓ",
+        "ヤ":"ﾔ","ユ":"ﾕ","ヨ":"ﾖ",
+        "ラ":"ﾗ","リ":"ﾘ","ル":"ﾙ","レ":"ﾚ","ロ":"ﾛ",
+        "ワ":"ﾜ","ヲ":"ｦ","ン":"ﾝ",
+        "ァ":"ｧ","ィ":"ｨ","ゥ":"ｩ","ェ":"ｪ","ォ":"ｫ",
+        "ャ":"ｬ","ュ":"ｭ","ョ":"ｮ","ッ":"ｯ",
+        "ー":"ｰ","。":"｡","、":"､","・":"･","「":"｢","」":"｣"
+      };
+      return str.replace(/[ァ-ヶー。、・・「」]/g, ch => map[ch] || ch);
+    }
+
+    function updateCounters(n, k, ng, c) {
+      document.getElementById("cntNotation").textContent = `表記ゆれ: ${n}`;
+      document.getElementById("cntKeigo").textContent = `敬語・表現: ${k}`;
+      document.getElementById("cntNg").textContent = `NGワード: ${ng}`;
+      document.getElementById("cntCustom").textContent = `カスタム置換: ${c}`;
+    }
+
+    function updateCharCount() {
+      const len = document.getElementById("inputText").value.length;
+      document.getElementById("charCount").textContent = `${len} 文字`;
+    }
+
+    function loadProSample() {
+      const sample = `本日は弊社よりwebサイトのシュミレーション結果について御連絡いたします。
+データーのフォルダやセキュリティー設定を確認したところ、色々見れる箇所が有りました。
+詳細は、お問合せフォームよりご確認出来るようになっております。了解しました。絶対に確認してください。`;
+      document.getElementById("inputText").value = sample;
+      updateCharCount();
+      runAllChecks();
+    }
+
+    function clearTexts() {
+      document.getElementById("inputText").value = "";
+      document.getElementById("outputText").value = "";
+      document.getElementById("reportOutput").value = "";
+      updateCharCount();
+      runAllChecks();
+    }
+
+    function copyTextFrom(id) {
+      const el = document.getElementById(id);
+      if (!el || !el.value) return;
+      navigator.clipboard.writeText(el.value).then(() => {
+        showToast("クリップボードにコピーしました");
+      });
+    }
+
+    function exportDictionary() {
+      navigator.clipboard.writeText(JSON.stringify(dict, null, 2)).then(() => {
+        showToast("辞書JSONをコピーしました");
+      });
+    }
+
+    function downloadDictionaryJson() {
+      const blob = new Blob([JSON.stringify(dict, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "text-checker-dictionary.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("JSONファイルをダウンロードしました");
+    }
+
+    function importDictionaryFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          dict = {
+            customReplaces: Array.isArray(parsed.customReplaces) ? parsed.customReplaces : [],
+            ngWords: Array.isArray(parsed.ngWords) ? parsed.ngWords : [],
+            snippets: Array.isArray(parsed.snippets) ? parsed.snippets : []
+          };
+          saveDictionary();
+          showToast("JSON辞書を読み込みました");
+        } catch (err) {
+          alert("JSONファイルの形式が正しくありません。");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    function resetDictionary() {
+      if (!confirm("カスタム置換・NGワード・定型文を初期状態に戻しますか？")) return;
+      dict = structuredClone(DEFAULT_DICT);
+      saveDictionary();
+    }
+
+    function switchTab(tabName, btnEl) {
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById(`tab-${tabName}`).classList.add("active");
+      btnEl.classList.add("active");
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("toastArea");
+      el.textContent = msg;
+      setTimeout(() => { el.textContent = ""; }, 2200);
+    }
+
+    document.getElementById("inputText").addEventListener("input", updateCharCount);
+    renderDictionaryUI();
+    updateCharCount();
+  </script>
+</body>
+</html>
