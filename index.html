@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>表記ゆれ・敬語一括チェッカー（無料体験版）</title>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --card: #ffffff;
+      --text: #1f2328;
+      --muted: #57606a;
+      --border: #d0d7de;
+      --accent: #0969da;
+      --accent-hover: #0550ae;
+      --warn-bg: #fff8c5;
+      --warn-border: #d4a72c;
+      --ok-bg: #dafbe1;
+      --ok-text: #116329;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #ddf4ff;
+      color: #0969da;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.7;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    textarea:focus {
+      outline: 2px solid var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      background: #f3f4f6;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    button.success {
+      background: #1f883d;
+      border-color: #1f883d;
+      color: #fff;
+    }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .pill {
+      background: #f6f8fa;
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .hit-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .hit-item {
+      border-left: 4px solid var(--warn-border);
+      background: var(--warn-bg);
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .hit-item.keigo {
+      border-left-color: #cf222e;
+      background: #ffebe9;
+    }
+
+    .empty-ok {
+      background: var(--ok-bg);
+      color: var(--ok-text);
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .pro-box {
+      background: linear-gradient(135deg, #f0f7ff, #f6f8fa);
+      border: 1px solid #9ec5fe;
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+
+    .pro-box h2 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      color: #0550ae;
+    }
+
+    .pro-box p {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .pro-box ul {
+      margin: 0 0 12px;
+      padding-left: 20px;
+      font-size: 13px;
+    }
+
+    .pro-link {
+      display: inline-block;
+      background: #0969da;
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .pro-link:hover {
+      background: #0550ae;
+    }
+
+    .toast {
+      font-size: 12px;
+      color: #1f883d;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="badge">無料体験版（全ローカル処理・送信なし）</span>
+      <h1>表記ゆれ・敬語一括チェッカー</h1>
+      <p class="subtitle">記事やメール文を貼り付けるだけで、よくある表記ゆれ（30+パターン）と二重敬語・ら抜き言葉を自動チェック＆一括統一します。</p>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">
+          <span>1. チェックしたい文章を入力</span>
+          <span id="charCount" style="font-size:12px; color:var(--muted);">0 文字</span>
+        </div>
+        <textarea id="inputText" placeholder="ここに記事・SNS投稿・ビジネスメールなどを貼り付けてください..."></textarea>
+        <div class="toolbar">
+          <button class="primary" onclick="runCheck()">チェック実行</button>
+          <button class="success" onclick="applyAllFixes()">表記ゆれを一括統一</button>
+          <button onclick="convertAlnumHalf()">全角英数を半角に統一</button>
+          <button onclick="loadSample()">サンプル読込</button>
+          <button onclick="clearAll()">クリア</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>2. 検出結果・修正プレビュー</span>
+          <span id="copyStatus" class="toast"></span>
+        </div>
+        <div class="stats">
+          <span class="pill" id="statReplace">表記ゆれ候補: 0件</span>
+          <span class="pill" id="statKeigo">敬語・表現注意: 0件</span>
+        </div>
+        <ul id="resultList" class="hit-list">
+          <li class="empty-ok">文章を入力して「チェック実行」を押してください。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>3. 修正後テキスト</span>
+        <button onclick="copyOutput()">結果をコピー</button>
+      </div>
+      <textarea id="outputText" placeholder="一括統一を実行すると、ここに整形済みの文章が出力されます。"></textarea>
+    </div>
+
+    <div class="pro-box">
+      <h2>完全版（note記事）ではさらに実務向けに拡張できます</h2>
+      <p>体験版は基本的な表記ゆれ・表現チェックのみ対応しています。noteの完全版では以下の機能をご利用いただけます。</p>
+      <ul>
+        <li><strong>150パターン以上の表記ゆれ辞書</strong>＋詳細な敬語チェック</li>
+        <li><strong>カスタム辞書（自分専用ルール・NGワード・定型置換）の登録＆JSON保存/読込</strong></li>
+        <li><strong>修正箇所レポート出力</strong>でレビュー時間をさらに短縮</li>
+      </ul>
+      <a class="pro-link" href="#note-pro-link" onclick="alert('note記事のURLを設定してご利用ください。'); return false;">完全版（note記事）の詳細を見る</a>
+    </div>
+  </div>
+
+  <script>
+    // 体験版：よくある日本語の表記ゆれ辞書（32パターン）
+    const REPLACE_RULES = [
+      { pattern: /出来る/g, fix: "できる", label: "「出来る」→「できる」" },
+      { pattern: /事/g, fix: "こと", label: "補助名詞「事」→「こと」（※必要に応じて調整）", skipAuto: true },
+      { pattern: /時/g, fix: "とき", label: "形式名詞「時」→「とき」（※必要に応じて調整）", skipAuto: true },
+      { pattern: /webサイト/g, fix: "Webサイト", label: "「webサイト」→「Webサイト」" },
+      { pattern: /WEBサイト/g, fix: "Webサイト", label: "「WEBサイト」→「Webサイト」" },
+      { pattern: /ウェブサイト/g, fix: "Webサイト", label: "「ウェブサイト」→「Webサイト」" },
+      { pattern: /お問合せ/g, fix: "お問い合わせ", label: "「お問合せ」→「お問い合わせ」" },
+      { pattern: /お問い合せ/g, fix: "お問い合わせ", label: "「お問い合せ」→「お問い合わせ」" },
+      { pattern: /ご要望/g, fix: "ご要望", label: "「ご要望」確認済み", skipAuto: true },
+      { pattern: /シュミレーション/g, fix: "シミュレーション", label: "「シュミレーション」→「シミュレーション」" },
+      { pattern: /シュミュレーション/g, fix: "シミュレーション", label: "「シュミュレーション」→「シミュレーション」" },
+      { pattern: /インターフェース/g, fix: "インターフェイス", label: "「インターフェース」→「インターフェイス」" },
+      { pattern: /ユーザー/g, fix: "ユーザー", label: "「ユーザー」表記統一", skipAuto: true },
+      { pattern: /ユーザ/g, fix: "ユーザー", label: "「ユーザ」→「ユーザー」" },
+      { pattern: /サーバー/g, fix: "サーバー", label: "「サーバー」表記統一", skipAuto: true },
+      { pattern: /サーバ/g, fix: "サーバー", label: "「サーバ」→「サーバー」" },
+      { pattern: /フォルダー/g, fix: "フォルダ", label: "「フォルダー」→「フォルダ」" },
+      { pattern: /フォルダ/g, fix: "フォルダ", label: "「フォルダ」表記統一", skipAuto: true },
+      { pattern: /ブラウザ/g, fix: "ブラウザ", label: "「ブラウザ」表記統一", skipAuto: true },
+      { pattern: /ブラウザー/g, fix: "ブラウザ", label: "「ブラウザー」→「ブラウザ」" },
+      { pattern: /データー/g, fix: "データ", label: "「データー」→「データ」" },
+      { pattern: /データ/g, fix: "データ", label: "「データ」表記統一", skipAuto: true },
+      { pattern: /ミーティング/g, fix: "ミーティング", label: "「ミーティング」表記統一", skipAuto: true },
+      { pattern: /打合せ/g, fix: "打ち合わせ", label: "「打合せ」→「打ち合わせ」" },
+      { pattern: /打ち合せ/g, fix: "打ち合わせ", label: "「打ち合せ」→「打ち合わせ」" },
+      { pattern: /御連絡/g, fix: "ご連絡", label: "「御連絡」→「ご連絡」" },
+      { pattern: /御案内/g, fix: "ご案内", label: "「御案内」→「ご案内」" },
+      { pattern: /御確認/g, fix: "ご確認", label: "「御確認」→「ご確認」" },
+      { pattern: /予め/g, fix: "あらかじめ", label: "「予め」→「あらかじめ」" },
+      { pattern: /大概/g, fix: "たいてい", label: "「大概」→「たいてい」" },
+      { pattern: /沢山/g, fix: "たくさん", label: "「沢山」→「たくさん」" },
+      { pattern: /色々/g, fix: "いろいろ", label: "「色々」→「いろいろ」" }
+    ];
+
+    // 体験版：二重敬語・ら抜き言葉などの注意表現パターン
+    const KEIGO_RULES = [
+      { pattern: /お伺いする/g, note: "「お伺いする」は謙譲語。目上の相手や状況に応じて使い分けを確認してください。" },
+      { pattern: /ご苦労様/g, note: "「ご苦労様」は目上の人に対して不自然な場合があります。「お疲れ様です」等の検討を。" },
+      { pattern: /させて頂/g, note: "「させて頂」の多用や「させていただく」の表現が冗長になっていないか確認してください。" },
+      { pattern: /見れる|食べれる|来れる|出れる|起きれる/g, note: "「ら抜き言葉」の可能性があります（例：「見られる」「食べられる」）。" },
+      { pattern: /了解しました/g, note: "ビジネスメールでは「承知いたしました」「かしこまりました」の方が丁寧です。" },
+      { pattern: /宜しくお願い/g, note: "「宜しくお願い」→「よろしくお願いいたします」への統一を検討してください。" }
+    ];
+
+    const inputEl = document.getElementById("inputText");
+    const outputEl = document.getElementById("outputText");
+    const listEl = document.getElementById("resultList");
+
+    inputEl.addEventListener("input", () => {
+      document.getElementById("charCount").textContent = `${inputEl.value.length} 文字`;
+    });
+
+    function runCheck() {
+      const text = inputEl.value;
+      document.getElementById("charCount").textContent = `${text.length} 文字`;
+
+      if (!text.trim()) {
+        listEl.innerHTML = '<li class="empty-ok">文章が空です。チェックしたい文章を入力してください。</li>';
+        updateStats(0, 0);
+        return;
+      }
+
+      let replaceHits = 0;
+      let keigoHits = 0;
+      const items = [];
+
+      // 表記ゆれ検出（自動置換対象のうち実際にヒットするもの）
+      REPLACE_RULES.forEach(rule => {
+        if (rule.skipAuto) return;
+        const matches = text.match(rule.pattern);
+        if (matches && matches.length > 0) {
+          replaceHits += matches.length;
+          items.push(`<li class="hit-item"><strong>表記ゆれ（${matches.length}件）：</strong>${rule.label}</li>`);
+        }
+      });
+
+      // 敬語・表現注意の検出
+      KEIGO_RULES.forEach(rule => {
+        const matches = text.match(rule.pattern);
+        if (matches && matches.length > 0) {
+          keigoHits += matches.length;
+          items.push(`<li class="hit-item keigo"><strong>表現注意（${matches.length}件）：</strong>${rule.note}</li>`);
+        }
+      });
+
+      updateStats(replaceHits, keigoHits);
+
+      if (items.length === 0) {
+        listEl.innerHTML = '<li class="empty-ok">体験版ルールでの表記ゆれ・要注意表現は検出されませんでした。</li>';
+      } else {
+        listEl.innerHTML = items.join("");
+      }
+    }
+
+    function applyAllFixes() {
+      let text = inputEl.value;
+      if (!text.trim()) return;
+
+      REPLACE_RULES.forEach(rule => {
+        if (!rule.skipAuto) {
+          text = text.replace(rule.pattern, rule.fix);
+        }
+      });
+
+      outputEl.value = text;
+      inputEl.value = text;
+      runCheck();
+      showToast("表記ゆれを一括統一しました");
+    }
+
+    function convertAlnumHalf() {
+      const base = outputEl.value || inputEl.value;
+      if (!base) return;
+      const converted = base.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+        String.fromCharCode(s.charCodeAt(0) - 0xfee0)
+      );
+      outputEl.value = converted;
+      inputEl.value = converted;
+      runCheck();
+      showToast("全角英数を半角に変換しました");
+    }
+
+    function copyOutput() {
+      const target = outputEl.value || inputEl.value;
+      if (!target) return;
+      navigator.clipboard.writeText(target).then(() => {
+        showToast("コピーしました");
+      });
+    }
+
+    function loadSample() {
+      const sample = `本日はwebサイトのシュミレーション結果について御連絡いたします。
+データーのフォルダを確認したところ、色々見れる箇所が有りました。
+詳細は、お問合せフォームよりご確認出来るようになっております。了解しました。`;
+      inputEl.value = sample;
+      outputEl.value = sample;
+      runCheck();
+    }
+
+    function clearAll() {
+      inputEl.value = "";
+      outputEl.value = "";
+      document.getElementById("charCount").textContent = "0 文字";
+      updateStats(0, 0);
+      listEl.innerHTML = '<li class="empty-ok">クリアしました。文章を入力してください。</li>';
+    }
+
+    function updateStats(rep, keigo) {
+      document.getElementById("statReplace").textContent = `表記ゆれ候補: ${rep}件`;
+      document.getElementById("statKeigo").textContent = `敬語・表現注意: ${keigo}件`;
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("copyStatus");
+      el.textContent = msg;
+      setTimeout(() => { el.textContent = ""; }, 2000);
+    }
+  </script>
+</body>
+</html>
