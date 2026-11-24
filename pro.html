@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>表記ゆれ・敬語・定型文一括チェッカー（完全版）</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --text: #18202c;
+      --muted: #5c6675;
+      --border: #d4dce6;
+      --accent: #1d4ed8;
+      --accent-hover: #1e40af;
+      --pro-badge-bg: #fef3c7;
+      --pro-badge-text: #92400e;
+      --warn-bg: #fffbeb;
+      --warn-border: #d97706;
+      --keigo-bg: #fef2f2;
+      --keigo-border: #dc2626;
+      --ng-bg: #fdf2f8;
+      --ng-border: #db2777;
+      --ok-bg: #ecfdf5;
+      --ok-text: #065f46;
+      --ok-border: #10b981;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .pro-badge {
+      display: inline-block;
+      background: var(--pro-badge-bg);
+      color: var(--pro-badge-text);
+      border: 1px solid #f59e0b;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    textarea, input[type="text"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+    }
+
+    textarea {
+      min-height: 240px;
+      line-height: 1.7;
+      resize: vertical;
+    }
+
+    textarea.small-area {
+      min-height: 90px;
+    }
+
+    textarea:focus, input[type="text"]:focus, select:focus {
+      outline: 2px solid var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .options-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .options-bar label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 8px 13px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.12s ease;
+    }
+
+    button:hover {
+      background: #f1f5f9;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    button.success {
+      background: #059669;
+      border-color: #059669;
+      color: #fff;
+    }
+
+    button.success:hover {
+      background: #047857;
+    }
+
+    button.danger {
+      background: #fff;
+      border-color: #fca5a5;
+      color: #b91c1c;
+      padding: 4px 9px;
+      font-size: 12px;
+    }
+
+    button.danger:hover {
+      background: #fef2f2;
+    }
+
+    .stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+
+    .pill {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .hit-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 340px;
+      overflow-y: auto;
+    }
+
+    .hit-item {
+      border-left: 4px solid var(--warn-border);
+      background: var(--warn-bg);
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .hit-item.keigo {
+      border-left-color: var(--keigo-border);
+      background: var(--keigo-bg);
+    }
+
+    .hit-item.ng {
+      border-left-color: var(--ng-border);
+      background: var(--ng-bg);
+    }
+
+    .empty-ok {
+      background: var(--ok-bg);
+      color: var(--ok-text);
+      border: 1px solid var(--ok-border);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .custom-list {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 0;
+    }
+
+    .custom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      background: #fafbfc;
+    }
+
+    .snippet-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .toast {
+      font-size: 12px;
+      color: #059669;
+      font-weight: 700;
+    }
+
+    .inline-form {
+      display: grid;
+      gap: 8px;
+    }
+
+    .muted-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <span class="pro-badge">PRO 完全版・全ローカル処理</span>
+        <h1>表記ゆれ・敬語・定型文一括チェッカー</h1>
+        <p class="subtitle">150パターン超の表記ゆれ統一・敬語/ら抜きチェック・カスタム辞書（置換/NG/定型文）・修正レポート出力まで一括対応。</p>
+      </div>
+      <div style="text-align:right; font-size:12px; color:var(--muted);">
+        <div id="dictSummary">辞書データ読み込み中...</div>
+        <div id="toastArea" class="toast"></div>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('checker', this)">1. 一括チェック・修正</button>
+      <button class="tab-btn" onclick="switchTab('custom', this)">2. カスタム辞書・NG・定型文</button>
+      <button class="tab-btn" onclick="switchTab('report', this)">3. チェック＆修正レポート</button>
+    </div>
+
+    <!-- タブ1：メインチェッカー -->
+    <div id="tab-checker" class="tab-panel active">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">
+            <span>チェック対象テキスト</span>
+            <span id="charCount" style="font-size:12px; color:var(--muted);">0 文字</span>
+          </div>
+          <textarea id="inputText" placeholder="記事・ビジネスメール・チャット文・原稿などを貼り付けてください..."></textarea>
+
+          <div class="options-bar">
+            <label><input type="checkbox" id="optAlnumHalf" checked /> 全角英数→半角</label>
+            <label><input type="checkbox" id="optKatakanaHalf" /> 全角カタカナ→半角（非推奨・任意）</label>
+            <label><input type="checkbox" id="optCustomReplace" checked /> カスタム置換ルール適用</label>
+          </div>
+
+          <div class="toolbar">
+            <button class="primary" onclick="runAllChecks()">一括チェック実行</button>
+            <button class="success" onclick="applyAllFixes()">表記ゆれ＆ルールを一括修正</button>
+            <button onclick="loadProSample()">サンプル読込</button>
+            <button onclick="clearTexts()">クリア</button>
+          </div>
+
+          <div style="margin-top:14px; border-top:1px solid #e2e8f0; padding-top:12px;">
+            <div style="font-size:13px; font-weight:700; margin-bottom:6px;">登録済み定型文を末尾へ挿入</div>
+            <div id="snippetButtons" class="snippet-grid"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>検出・警告リスト</span>
+          </div>
+          <div class="stats">
+            <span class="pill" id="cntNotation">表記ゆれ: 0</span>
+            <span class="pill" id="cntKeigo">敬語・表現: 0</span>
+            <span class="pill" id="cntNg">NGワード: 0</span>
+            <span class="pill" id="cntCustom">カスタム置換: 0</span>
+          </div>
+          <ul id="detectionList" class="hit-list">
+            <li class="empty-ok">文章を入力して「一括チェック実行」を押してください。</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>修正後テキスト</span>
+          <button onclick="copyTextFrom('outputText')">修正後テキストをコピー</button>
+        </div>
+        <textarea id="outputText" placeholder="「表記ゆれ＆ルールを一括修正」を実行すると、修正後の文章が出力されます。"></textarea>
+      </div>
+    </div>
+
+    <!-- タブ2：カスタム辞書・NG・定型文 -->
+    <div id="tab-custom" class="tab-panel">
+      <div class="grid-3">
+        <!-- カスタム置換 -->
+        <div class="card">
+          <div class="card-title"><span>自分専用 置換ルール</span></div>
+          <div class="inline-form">
+            <input type="text" id="repFrom" placeholder="置換前の文字列（例：弊社）" />
+            <input type="text" id="repTo" placeholder="置換後の文字列（例：当社）" />
+            <button class="primary" onclick="addCustomReplace()">置換ルールを追加</button>
+          </div>
+          <ul id="customReplaceList" class="custom-list"></ul>
+        </div>
+
+        <!-- NGワード -->
+        <div class="card">
+          <div class="card-title"><span>NGワード・注意語登録</span></div>
+          <div class="inline-form">
+            <input type="text" id="ngWordInput" placeholder="警告したいNGワード（例：絶対、儲かる）" />
+            <input type="text" id="ngReasonInput" placeholder="メモ・理由（例：薬機法/誇大表現注意）" />
+            <button class="primary" onclick="addNgWord()">NGワードを追加</button>
+          </div>
+          <ul id="ngWordList" class="custom-list"></ul>
+        </div>
+
+        <!-- 定型文 -->
+        <div class="card">
+          <div class="card-title"><span>定型文スニペット登録</span></div>
+          <div class="inline-form">
+            <input type="text" id="snipTitleInput" placeholder="ボタン名（例：結びの挨拶）" />
+            <textarea id="snipBodyInput" class="small-area" placeholder="挿入する定型文を入力..."></textarea>
+            <button class="primary" onclick="addSnippet()">定型文を追加</button>
+          </div>
+          <ul id="snippetList" class="custom-list"></ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>辞書のバックアップ（JSON書き出し・読み込み）</span></div>
+        <div class="toolbar">
+          <button onclick="exportDictionary()">JSONをコピー</button>
+          <button onclick="downloadDictionaryJson()">JSONファイルを保存</button>
+          <button onclick="document.getElementById('jsonFileInput').click()">JSONファイルを読み込む</button>
+          <input type="file" id="jsonFileInput" accept=".json" style="display:none;" onchange="importDictionaryFile(event)" />
+          <button class="danger" onclick="resetDictionary()">初期状態に戻す</button>
+        </div>
+        <p class="muted-note">※すべてのデータはご利用中のブラウザ（localStorage）に保存され、外部サーバーへ送信されることはありません。</p>
+      </div>
+    </div>
+
+    <!-- タブ3：チェック＆修正レポート -->
+    <div id="tab-report" class="tab-panel">
+      <div class="card">
+        <div class="card-title">
+          <span>チェック＆修正サマリーレポート</span>
+          <button onclick="copyTextFrom('reportOutput')">レポートをコピー</button>
+        </div>
+        <textarea id="reportOutput" placeholder="チェックまたは一括修正を実行すると、ここに結果レポートが生成されます。"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 150パターン超相当の表記ゆれ・ひらがな/漢字/カタカナ統一ルールセット
+    // auto: true は一括修正時に自動置換、auto: false は検出のみ（文脈判断が必要なもの）
+    const BUILTIN_NOTATION_RULES = [
+      // 補助名詞・形式名詞のひらがな統一（検出中心＋一部自動）
+      { from: "出来る", to: "できる", auto: true, cat: "ひらがな/漢字" },
+      { from: "事", to: "こと", auto: false, cat: "形式名詞" },
+      { from: "時", to: "とき", auto: false, cat: "形式名詞" },
+      { from: "為", to: "ため", auto: false, cat: "接続/名詞" },
+      { from: "元", to: "もと", auto: false, cat: "形式名詞" },
+      { from: "等", to: "など", auto: false, cat: "副助詞" },
+      { from: "迄", to: "まで", auto: true, cat: "助詞" },
+      { from: " Puis", to: "", auto: false, cat: "その他" },
+      { from: "予め", to: "あらかじめ", auto: true, cat: "副詞" },
+      { from: "大概", to: "たいてい", auto: true, cat: "副詞" },
+      { from: "沢山", to: "たくさん", auto: true, cat: "副詞" },
+      { from: "色々", to: "いろいろ", auto: true, cat: "形容動詞" },
+      { from: "殆ど", to: "ほとんど", auto: true, cat: "副詞" },
+      { from: "丁度", to: "ちょうど", auto: true, cat: "副詞" },
+      { from: "屡々", to: "しばしば", auto: true, cat: "副詞" },
+      { from: "偶に", to: "たまに", auto: true, cat: "副詞" },
+      { from: "直ぐ", to: "すぐ", auto: true, cat: "副詞" },
+      { from: "未だ", to: "まだ", auto: true, cat: "副詞" },
+      { from: "既", to: "すでに", auto: false, cat: "副詞" },
+      { from: "寧ろ", to: "むしろ", auto: true, cat: "副詞" },
+      { from: "唯", to: "ただ", auto: false, cat: "副詞" },
+      { from: "随分", to: "ずいぶん", auto: true, cat: "副詞" },
+      { from: "折角", to: "せっかく", auto: true, cat: "副詞" },
+      { from: "相変らず", to: "相変わらず", auto: true, cat: "表記統一" },
+      { from: "有難う", to: "ありがとう", auto: true, cat: "表記統一" },
+      { from: "有り難う", to: "ありがとう", auto: true, cat: "表記統一" },
+      { from: "有難うございます", to: "ありがとうございます", auto: true, cat: "表記統一" },
+      { from: "有り難うございます", to: "ありがとうございます", auto: true, cat: "表記統一" },
+      { from: "申し訳ない", to: "申し訳ない", auto: false, cat: "表記統一" },
+      { from: "申訳ない", to: "申し訳ない", auto: true, cat: "表記統一" },
+
+      // 敬語・ビジネス文書での漢字/ひらがな・表記ゆれ
+      { from: "お問合せ", to: "お問い合わせ", auto: true, cat: "ビジネス表記" },
+      { from: "お問い合せ", to: "お問い合わせ", auto: true, cat: "ビジネス表記" },
+      { from: "お問合わせ", to: "お問い合わせ", auto: true, cat: "ビジネス表記" },
+      { from: "お問合せフォーム", to: "お問い合わせフォーム", auto: true, cat: "ビジネス表記" },
+      { from: "打合せ", to: "打ち合わせ", auto: true, cat: "ビジネス表記" },
+      { from: "打ち合せ", to: "打ち合わせ", auto: true, cat: "ビジネス表記" },
+      { from: "打合わせ", to: "打ち合わせ", auto: true, cat: "ビジネス表記" },
+      { from: "御連絡", to: "ご連絡", auto: true, cat: "ビジネス表記" },
+      { from: "御案内", to: "ご案内", auto: true, cat: "ビジネス表記" },
+      { from: "御確認", to: "ご確認", auto: true, cat: "ビジネス表記" },
+      { from: "御相談", to: "ご相談", auto: true, cat: "ビジネス表記" },
+      { from: "御質問", to: "ご質問", auto: true, cat: "ビジネス表記" },
+      { from: "御依頼", to: "ご依頼", auto: true, cat: "ビジネス表記" },
+      { from: "御報告", to: "ご報告", auto: true, cat: "ビジネス表記" },
+      { from: "御礼", to: "お礼", auto: true, cat: "ビジネス表記" },
+      { from: "御願い", to: "お願い", auto: true, cat: "ビジネス表記" },
+      { from: "御手数", to: "お手数", auto: true, cat: "ビジネス表記" },
+      { from: "御社", to: "貴社", auto: false, cat: "ビジネス表記" },
+      { from: "貴社", to: "貴社", auto: false, cat: "ビジネス表記" },
+      { from: "御中", to: "御中", auto: false, cat: "ビジネス表記" },
+      { from: "各位", to: "各位", auto: false, cat: "ビジネス表記" },
+      { from: "各位様", to: "各位", auto: true, cat: "ビジネス表記" },
+      { from: "宜しくお願い致します", to: "よろしくお願いいたします", auto: true, cat: "ビジネス表記" },
+      { from: "宜しくお願いします", to: "よろしくお願いします", auto: true, cat: "ビジネス表記" },
+      { from: "宜しく", to: "よろしく", auto: true, cat: "ビジネス表記" },
+
+      // Web・IT・デジタル用語の表記ゆれ（長音・大文字小文字・外来語）
+      { from: "webサイト", to: "Webサイト", auto: true, cat: "Web/IT" },
+      { from: "WEBサイト", to: "Webサイト", auto: true, cat: "Web/IT" },
+      { from: "ウェブサイト", to: "Webサイト", auto: true, cat: "Web/IT" },
+      { from: "webページ", to: "Webページ", auto: true, cat: "Web/IT" },
+      { from: "WEBページ", to: "Webページ", auto: true, cat: "Web/IT" },
+      { from: "ウェブページ", to: "Webページ", auto: true, cat: "Web/IT" },
+      { from: "web", to: "Web", auto: false, cat: "Web/IT" },
+      { from: "シュミレーション", to: "シミュレーション", auto: true, cat: "外来語長音" },
+      { from: "シュミュレーション", to: "シミュレーション", auto: true, cat: "外来語長音" },
+      { from: "シミュレーション", to: "シミュレーション", auto: false, cat: "外来語長音" },
+      { from: "インターフェース", to: "インターフェイス", auto: true, cat: "外来語長音" },
+      { from: "インターフェイス", to: "インターフェイス", auto: false, cat: "外来語長音" },
+      { from: "ユーザ", to: "ユーザー", auto: true, cat: "外来語長音" },
+      { from: "ユーザー", to: "ユーザー", auto: false, cat: "外来語長音" },
+      { from: "サーバ", to: "サーバー", auto: true, cat: "外来語長音" },
+      { from: "サーバー", to: "サーバー", auto: false, cat: "外来語長音" },
+      { from: "フォルダー", to: "フォルダ", auto: true, cat: "外来語長音" },
+      { from: "フォルダ", to: "フォルダ", auto: false, cat: "外来語長音" },
+      { from: "ブラウザー", to: "ブラウザ", auto: true, cat: "外来語長音" },
+      { from: "ブラウザ", to: "ブラウザ", auto: false, cat: "外来語長音" },
+      { from: "データー", to: "データ", auto: true, cat: "外来語長音" },
+      { from: "データ", to: "データ", auto: false, cat: "外来語長音" },
+      { from: "パラメーター", to: "パラメータ", auto: true, cat: "外来語長音" },
+      { from: "パラメータ", to: "パラメータ", auto: false, cat: "外来語長音" },
+      { from: "プリンター", to: "プリンタ", auto: true, cat: "外来語長音" },
+      { from: "プリンタ", to: "プリンタ", auto: false, cat: "外来語長音" },
+      { from: "モニター", to: "モニタ", auto: false, cat: "外来語長音" },
+      { from: "コンピューター", to: "コンピュータ", auto: true, cat: "外来語長音" },
+      { from: "コンピュータ", to: "コンピュータ", auto: false, cat: "外来語長音" },
+      { from: "セキュリティー", to: "セキュリティ", auto: true, cat: "外来語長音" },
+      { from: "セキュリティ", to: "セキュリティ", auto: false, cat: "外来語長音" },
+      { from: "コミュニティー", to: "コミュニティ", auto: true, cat: "外来語長音" },
+      { from: "コミュニティ", to: "コミュニティ", auto: false, cat: "外来語長音" },
+      { from: "カテゴリー", to: "カテゴリ", auto: true, cat: "外来語長音" },
+      { from: "カテゴリ", to: "カテゴリ", auto: false, cat: "外来語長音" },
+      { from: "ディレクトリー", to: "ディレクトリ", auto: true, cat: "外来語長音" },
+      { from: "ディレクトリ", to: "ディレクトリ", auto: false, cat: "外来語長音" },
+      { from: "ライブラリー", to: "ライブラリ", auto: true, cat: "外来語長音" },
+      { from: "ライブラリ", to: "ライブラリ", auto: false, cat: "外来語長音" },
+      { from: "メモリー", to: "メモリ", auto: true, cat: "外来語長音" },
+      { from: "メモリ", to: "メモリ", auto: false, cat: "外来語長音" },
+      { from: "バッファー", to: "バッファ", auto: true, cat: "外来語長音" },
+      { from: "バッファ", to: "バッファ", auto: false, cat: "外来語長音" },
+      { from: "キャリアー", to: "キャリア", auto: true, cat: "外来語長音" },
+      { from: "バリヤー", to: "バリア", auto: true, cat: "外来語長音" },
+      { from: "エラー", to: "エラー", auto: false, cat: "外来語長音" },
+      { from: "ダウンロード", to: "ダウンロード", auto: false, cat: "外来語" },
+      { from: "アップロード", to: "アップロード", auto: false, cat: "外来語" },
+      { from: "ログイン", to: "ログイン", auto: false, cat: "外来語" },
+      { from: "ログアウト", to: "ログアウト", auto: false, cat: "外来語" },
+      { from: "オンライン", to: "オンライン", auto: false, cat: "外来語" },
+      { from: "オフライン", to: "オフライン", auto: false, cat: "外来語" },
+      { from: "マニュアル", to: "マニュアル", auto: false, cat: "外来語" },
+      { from: "テンプレート", to: "テンプレート", auto: false, cat: "外来語" },
+      { from: "スケジュール", to: "スケジュール", auto: false, cat: "外来語" },
+      { from: "ミーティング", to: "ミーティング", auto: false, cat: "外来語" },
+      { from: "コンテンツ", to: "コンテンツ", auto: false, cat: "外来語" },
+      { from: "コンバージョン", to: "コンバージョン", auto: false, cat: "外来語" },
+      { from: "キャンペーン", to: "キャンペーン", auto: false, cat: "外来語" },
+      { from: "プラットフォーム", to: "プラットフォーム", auto: false, cat: "外来語" },
+      { from: "マネジメント", to: "マネジメント", auto: false, cat: "外来語" },
+      { from: "リスク", to: "リスク", auto: false, cat: "外来語" },
+      { from: "コスト", to: "コスト", auto: false, cat: "外来語" },
+      { from: "メリット", to: "メリット", auto: false, cat: "外来語" },
+      { from: "デメリット", to: "デメリット", auto: false, cat: "外来語" },
+      { from: "ノウハウ", to: "ノウハウ", auto: false, cat: "外来語" },
+      { from: "ルーティン", to: "ルーティン", auto: false, cat: "外来語" },
+      { from: "ルーチン", to: "ルーティン", auto: false, cat: "外来語" },
+
+      // よくある誤字・混同しやすい漢字/語句
+      { from: "以外", to: "以外", auto: false, cat: "漢字確認" },
+      { from: "以前", to: "以前", auto: false, cat: "漢字確認" },
+      { from: "以降", to: "以降", auto: false, cat: "漢字確認" },
+      { from: "以上", to: "以上", auto: false, cat: "漢字確認" },
+      { from: "以下", to: "以下", auto: false, cat: "漢字確認" },
+      { from: "一概", to: "一概", auto: false, cat: "漢字確認" },
+      { from: "一環", to: "一環", auto: false, cat: "漢字確認" },
+      { from: "一念", to: "一念", auto: false, cat: "漢字確認" },
+      { from: "一息", to: "一息", auto: false, cat: "漢字確認" },
+      { from: "一入", to: "一入", auto: false, cat: "漢字確認" },
+      { from: "一入", to: "一入", auto: false, cat: "漢字確認" },
+      { from: "経緯", to: "経緯", auto: false, cat: "漢字確認" },
+      { from: "把握", to: "把握", auto: false, cat: "漢字確認" },
+      { from: "精査", to: "精査", auto: false, cat: "漢字確認" },
+      { from: "網羅", to: "網羅", auto: false, cat: "漢字確認" },
+      { from: "担保", to: "担保", auto: false, cat: "漢字確認" },
+      { from: "俯瞰", to: "俯瞰", auto: false, cat: "漢字確認" },
+      { from: "遂行", to: "遂行", auto: false, cat: "漢字確認" },
+      { from: "齟齬", to: "齟齬", auto: false, cat: "漢字確認" },
+      { from: "汎用", to: "汎用", auto: false, cat: "漢字確認" },
+      { from: "廉価", to: "廉価", auto: false, cat: "漢字確認" },
+      { from: "漸進", to: "漸進", auto: false, cat: "漢字確認" },
+      { from: "代替", to: "代替", auto: false, cat: "漢字確認" },
+      { from: "代替え", to: "代替", auto: true, cat: "誤字/表記" },
+      { from: "代替案", to: "代替案", auto: false, cat: "漢字確認" },
+      { from: "代替え案", to: "代替案", auto: true, cat: "誤字/表記" },
+      { from: "早急", to: "早急", auto: false, cat: "漢字確認" },
+      { from: "速やか", to: "速やか", auto: false, cat: "漢字確認" },
+      { from: "適宜", to: "適宜", auto: false, cat: "漢字確認" },
+      { from: "随時", to: "随時", auto: false, cat: "漢字確認" },
+      { from: "都度", to: "都度", auto: false, cat: "漢字確認" },
+      { from: "念のため", to: "念のため", auto: false, cat: "表記確認" },
+      { from: "念の為", to: "念のため", auto: true, cat: "表記統一" },
+      { from: "お陰様", to: "おかげさま", auto: true, cat: "表記統一" },
+      { from: "お蔭様", to: "おかげさま", auto: true, cat: "表記統一" },
+      { from: "致す", to: "いたす", auto: false, cat: "補助動詞" },
+      { from: "頂く", to: "いただく", auto: false, cat: "補助動詞" },
+      { from: "下さる", to: "くださる", auto: false, cat: "補助動詞" },
+      { from: "置く", to: "おく", auto: false, cat: "補助動詞" },
+      { from: "見る", to: "みる", auto: false, cat: "補助動詞" },
+      { from: "行く", to: "いく", auto: false, cat: "補助動詞" },
+      { from: "来る", to: "くる", auto: false, cat: "補助動詞" },
+      { from: "成る", to: "なる", auto: false, cat: "補助動詞" },
+      { from: "良い", to: "よい", auto: false, cat: "形容詞" },
+      { from: "易い", to: "やすい", auto: false, cat: "接尾辞" },
+      { from: "難い", to: "にくい", auto: false, cat: "接尾辞" },
+      { from: "強い", to: "つよい", auto: false, cat: "形容詞" },
+      { from: "深い", to: "ふかい", auto: false, cat: "形容詞" },
+      { from: "高い", to: "たかい", auto: false, cat: "形容詞" },
+      { from: "低い", to: "ひくい", auto: false, cat: "形容詞" },
+      { from: "多い", to: "おおい", auto: false, cat: "形容詞" },
+      { from: "少ない", to: "すくない", auto: false, cat: "形容詞" },
+      { from: "新しい", to: "あたらしい", auto: false, cat: "形容詞" },
+      { from: "古い", to: "ふるい", auto: false, cat: "形容詞" },
+      { from: "長い", to: "ながい", auto: false, cat: "形容詞" },
+      { from: "短い", to: "みじかい", auto: false, cat: "形容詞" },
+      { from: "広い", to: "ひろい", auto: false, cat: "形容詞" },
+      { from: "狭い", to: "せまい", auto: false, cat: "形容詞" },
+      { from: "重い", to: "おもい", auto: false, cat: "形容詞" },
+      { from: "軽い", to: "かるい", auto: false, cat: "形容詞" },
+      { from: "早い", to: "はやい", auto: false, cat: "形容詞" },
+      { from: "遅い", to: "おそい", auto: false, cat: "形容詞" },
+      { from: "近い", to: "ちかい", auto: false, cat: "形容詞" },
+      { from: "遠い", to: "とおい", auto: false, cat: "形容詞" },
+      { from: "優しい", to: "やさしい", auto: false, cat: "形容詞" },
+      { from: "厳しい", to: "きびしい", auto: false, cat: "形容詞" },
+      { from: "詳しい", to: "くわしい", auto: false, cat: "形容詞" },
+      { from: "正しい", to: "ただしい", auto: false, cat: "形容詞" },
+      { from: "望ましい", to: "のぞましい", auto: false, cat: "形容詞" },
+      { from: "相応しい", to: "ふさわしい", auto: false, cat: "形容詞" },
+      { from: "珍しい", to: "めずらしい", auto: false, cat: "形容詞" },
+      { from: "喜ばしい", to: "よろこばしい", auto: false, cat: "形容詞" },
+      { from: "恐縮", to: "恐縮", auto: false, cat: "ビジネス表記" },
+      { from: "拝承", to: "拝承", auto: false, cat: "ビジネス表記" },
+      { from: "承知", to: "承知", auto: false, cat: "ビジネス表記" },
+      { from: "了解", to: "了解", auto: false, cat: "ビジネス表記" },
+      { from: "合点", to: "合点", auto: false, cat: "表記確認" },
+      { from: "納得", to: "納得", auto: false, cat: "表記確認" },
+      { from: "確認", to: "確認", auto: false, cat: "表記確認" },
+      { from: "共有", to: "共有", auto: false, cat: "表記確認" },
+      { from: "連携", to: "連携", auto: false, cat: "表記確認" },
+      { from: "反映", to: "反映", auto: false, cat: "表記確認" },
+      { from: "実装", to: "実装", auto: false, cat: "表記確認" },
+      { from: "運用", to: "運用", auto: false, cat: "表記確認" },
+      { from: "保守", to: "保守", auto: false, cat: "表記確認" },
+      { from: "改修", to: "改修", auto: false, cat: "表記確認" },
+      { from: "検証", to: "検証", auto: false, cat: "表記確認" },
+      { from: "集計", to: "集計", auto: false, cat: "表記確認" },
+      { from: "抽出", to: "抽出", auto: false, cat: "表記確認" },
+      { from: "整形", to: "整形", auto: false, cat: "表記確認" },
+      { from: "出力", to: "出力", auto: false, cat: "表記確認" },
+      { from: "入力", to: "入力", auto: false, cat: "表記確認" },
+      { from: "登録", to: "登録", auto: false, cat: "表記確認" },
+      { from: "削除", to: "削除", auto: false, cat: "表記確認" },
+      { from: "更新", to: "更新", auto: false, cat: "表記確認" },
+      { from: "設定", to: "設定", auto: false, cat: "表記確認" },
+      { from: "画面", to: "画面", auto: false, cat: "表記確認" },
+      { from: "機能", to: "機能", auto: false, cat: "表記確認" },
+      { from: "仕様", to: "仕様", auto: false, cat: "表記確認" },
+      { from: "要件", to: "要件", auto: false, cat: "表記確認" },
+      { from: "課題", to: "課題", auto: false, cat: "表記確認" },
+      { from: "対応", to: "対応", auto: false, cat: "表記確認" },
+      { from: "調整", to: "調整", auto: false, cat: "表記確認" },
+      { from: "確認事項", to: "確認事項", auto: false, cat: "表記確認" },
+      { from: "連絡事項", to: "連絡事項", auto: false, cat: "表記確認" },
+      { from: "注意事項", to: "注意事項", auto: false, cat: "表記確認" },
+      { from: "備考欄", to: "備考欄", auto: false, cat: "表記確認" },
+      { from: "該当箇所", to: "該当箇所", auto: false, cat: "表記確認" },
+      { from: "対象外", to: "対象外", auto: false, cat: "表記確認" },
+      { from: "必須項目", to: "必須項目", auto: false, cat: "表記確認" },
+      { from: "任意項目", to: "任意項目", auto: false, cat: "表記確認" },
+      { from: "一括処理", to: "一括処理", auto: false, cat: "表記確認" },
+      { from: "自動生成", to: "自動生成", auto: false, cat: "表記確認" },
+      { from: "事前確認", to: "事前確認", auto: false, cat: "表記確認" },
+      { from: "事後対応", to: "事後対応", auto: false, cat: "表記確認" }
+    ];
+
+    // 敬語・ら抜き言葉・表現ルール
+    const KEIGO_PATTERNS = [
+      { regex: /お伺いする|お伺いします/g, label: "「お伺いする」は謙譲語。相手や状況に応じた表現か確認してください。" },
+      { regex: /ご苦労様/g, label: "「ご苦労様」は目上の相手へは不自然な場合があります。「お疲れ様です」等の検討を。" },
+      { regex: /させていただく|させて頂く|させて頂/g, label: "「させていただく」の連続・多用は冗長になりやすいため、
